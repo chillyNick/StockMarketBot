@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="gitlab.ozon.dev/chillyNick/homework-2/pkg/api";
+
+package api;
+
+message StockName {
+  string name = 1;
+}
+
+message Stock {
+  StockName name = 1;
+}
+
+service StockMarketService {
+  rpc FindStock(StockName) returns (Stock) {}
+}

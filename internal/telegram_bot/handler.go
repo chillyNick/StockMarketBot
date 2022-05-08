@@ -1,15 +1,18 @@
 package telegram_bot
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
+	"log"
 	"strconv"
 	"strings"
 )
 
 var stocks []string = []string{"apple", "facebook", "amazon", "netflix"}
 
-func Handle(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+func Handle(bot *tgbotapi.BotAPI, update tgbotapi.Update, client pb.StockMarketServiceClient) {
 	if update.Message == nil || !update.Message.IsCommand() {
 		return
 	}
@@ -21,7 +24,9 @@ func Handle(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	case "help":
 		text = "/add_stock - Add to the stock portfolio\n/remove_stock - Remove from the stock portfolio"
 	case "add_stock":
-		text = processAddStockCommand(update)
+		text = processAddStockCommand(update, client)
+	default:
+		text = "not supported command"
 	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
@@ -29,7 +34,7 @@ func Handle(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	sendMessage(bot, msg)
 }
 
-func processAddStockCommand(update tgbotapi.Update) string {
+func processAddStockCommand(update tgbotapi.Update, client pb.StockMarketServiceClient) string {
 	splitMsg := strings.Split(update.Message.Text, " ")
 	if len(splitMsg) != 3 {
 		return "Type in the next format /add_stock stockName amount"
@@ -49,6 +54,13 @@ func processAddStockCommand(update tgbotapi.Update) string {
 	amount, err := strconv.Atoi(splitMsg[2])
 	if err != nil || amount <= 0 {
 		return "amount must be a positive number"
+	}
+
+	stockRes, err := client.FindStock(context.Background(), &pb.StockName{Name: splitMsg[1]})
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Printf("successfully client call %v\n", stockRes.GetName())
 	}
 
 	return fmt.Sprintf("%v %v was added into portfolio", amount, splitMsg[1])

@@ -2,6 +2,9 @@ package server
 
 import (
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
+	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"os"
 
@@ -27,8 +30,19 @@ func StartAndServe() error {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updates := bot.GetUpdatesChan(updateConfig)
 
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	conn, err := grpc.Dial("localhost:6000", opts...)
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	client := pb.NewStockMarketServiceClient(conn)
+
 	for update := range updates {
-		telegram_bot.Handle(bot, update)
+		telegram_bot.Handle(bot, update, client)
 	}
 
 	return nil
