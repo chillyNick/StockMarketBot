@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-var stocks []string = []string{"apple", "facebook", "amazon", "netflix"}
-
 func Handle(bot *tgbotapi.BotAPI, update tgbotapi.Update, client pb.StockMarketServiceClient) {
 	if update.Message == nil || !update.Message.IsCommand() {
 		return
@@ -40,16 +38,9 @@ func processAddStockCommand(update tgbotapi.Update, client pb.StockMarketService
 		return "Type in the next format /add_stock stockName amount"
 	}
 
-	stock := ""
-	for _, s := range stocks {
-		if s == splitMsg[1] {
-			stock = splitMsg[1]
-		}
-	}
-
-	if stock == "" {
-		return fmt.Sprintf("Couldn't found stock with name %v", splitMsg[1])
-	}
+	//if stock == "" {
+	//	return fmt.Sprintf("Couldn't found stock with name %v", splitMsg[1])
+	//}
 
 	amount, err := strconv.Atoi(splitMsg[2])
 	if err != nil || amount <= 0 {

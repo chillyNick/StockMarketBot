@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/piquette/finance-go/quote"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"log"
@@ -16,6 +17,13 @@ type StockMarketServiceServer struct {
 
 func (s *StockMarketServiceServer) FindStock(ctx context.Context, name *pb.StockName) (*pb.Stock, error) {
 	fmt.Printf("Find stock method call about %v", name.GetName())
+
+	q, err := quote.Get(name.GetName())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(q)
 
 	return &pb.Stock{Name: name}, nil
 }

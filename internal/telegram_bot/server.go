@@ -1,7 +1,6 @@
-package server
+package telegram_bot
 
 import (
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -42,7 +41,7 @@ func StartAndServe() error {
 	client := pb.NewStockMarketServiceClient(conn)
 
 	for update := range updates {
-		telegram_bot.Handle(bot, update, client)
+		Handle(bot, update, client)
 	}
 
 	return nil
