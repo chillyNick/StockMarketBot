@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func Handle(bot *tgbotapi.BotAPI, update tgbotapi.Update, client pb.StockMarketServiceClient) {
+func (s *server) handle(update tgbotapi.Update, client pb.StockMarketServiceClient) {
 	if update.Message == nil || !update.Message.IsCommand() {
 		return
 	}
@@ -29,7 +29,7 @@ func Handle(bot *tgbotapi.BotAPI, update tgbotapi.Update, client pb.StockMarketS
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 
-	sendMessage(bot, msg)
+	s.send(msg)
 }
 
 func processAddStockCommand(update tgbotapi.Update, client pb.StockMarketServiceClient) string {
@@ -55,10 +55,4 @@ func processAddStockCommand(update tgbotapi.Update, client pb.StockMarketService
 	}
 
 	return fmt.Sprintf("%v %v was added into portfolio", amount, splitMsg[1])
-}
-
-func sendMessage(bot *tgbotapi.BotAPI, c tgbotapi.Chattable) {
-	if _, err := bot.Send(c); err != nil {
-		panic(err)
-	}
 }
