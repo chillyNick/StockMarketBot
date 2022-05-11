@@ -1,6 +1,13 @@
 package repository
 
-import "github.com/jackc/pgx/v4/pgxpool"
+import (
+	"context"
+	"errors"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
+)
 
 type repository struct {
 	pool *pgxpool.Pool
@@ -8,4 +15,64 @@ type repository struct {
 
 func New(pool *pgxpool.Pool) *repository {
 	return &repository{pool: pool}
+}
+
+func (r repository) CreateUser(ctx context.Context, id int64, chatId int64, serverUserId int64) error {
+	const query = `
+		INSERT INTO "user" (
+			id,
+			chat_id,
+			server_user_id,
+			state
+		) VALUES (
+			$1, $2, $3, $4
+		)
+	`
+
+	_, err := r.pool.Exec(ctx, query,
+		id,
+		chatId,
+		serverUserId,
+		models.UserStateMenu,
+	)
+
+	return err
+}
+
+func (r *repository) GetUser(ctx context.Context, id int64) (*models.User, error) {
+	const query = `
+		SELECT
+			id,
+			chat_id,
+			server_user_id,
+			state
+		FROM "user"
+		WHERE id = $1
+	`
+
+	u := models.User{}
+
+	err := r.pool.QueryRow(ctx, query, id).Scan(
+		&u.Id,
+		&u.ChatId,
+		&u.ServerUserId,
+		&u.State,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, telegram_bot.ErrNotFound
+	}
+
+	return &u, nil
+}
+
+func (r *repository) UpdateUserState(ctx context.Context, id int64, state string) error {
+	const query = `
+		UPDATE "user"
+		SET state = $2
+		WHERE id = $1
+	`
+	_, err := r.pool.Exec(ctx, query, id, state)
+
+	return err
 }

@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bot, err := telegram_bot.New(os.Getenv("TELEGRAM_APITOKEN"), repository.New(adp))
+	bot, err := telegram_bot.New(os.Getenv("TELEGRAM_APITOKEN"), repository.New(adp), true)
 	if err != nil {
 		log.Fatal(err)
 	}

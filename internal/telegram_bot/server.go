@@ -12,12 +12,12 @@ type server struct {
 	repo repository
 }
 
-func New(tgToken string, repo repository) (*server, error) {
+func New(tgToken string, repo repository, debug bool) (*server, error) {
 	bot, err := tgbotapi.NewBotAPI(tgToken)
 	if err != nil {
 		return nil, err
 	}
-	bot.Debug = true
+	bot.Debug = debug
 
 	return &server{bot: bot, repo: repo}, nil
 }
