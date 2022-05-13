@@ -12,6 +12,6 @@ const (
 type User struct {
 	Id           int64
 	ChatId       int64
-	ServerUserId int64
+	ServerUserId int32
 	State        string
 }

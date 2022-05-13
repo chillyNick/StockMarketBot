@@ -1,0 +1,138 @@
+package repository
+
+import (
+	"context"
+	"errors"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/models"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
+)
+
+type repository struct {
+	pool *pgxpool.Pool
+}
+
+func New(pool *pgxpool.Pool) *repository {
+	return &repository{pool: pool}
+}
+
+func (r *repository) CreateUser(ctx context.Context) (int32, error) {
+	const query = `
+		INSERT into "user" (id) values (default) returning id
+	`
+	var id int32
+	err := r.pool.QueryRow(ctx, query).Scan(&id)
+
+	return id, err
+}
+
+func (r *repository) GetStock(ctx context.Context, userId int32, name string) (*models.Stock, error) {
+	const query = `
+		SELECT
+			id,
+			name,
+			user_id,
+			amount,
+			created_at
+		FROM stock
+		WHERE user_id = $1 AND name = $2"
+	`
+
+	s := models.Stock{}
+
+	err := r.pool.QueryRow(ctx, query, userId, name).Scan(
+		&s.Id,
+		&s.Name,
+		&s.UserId,
+		&s.Amount,
+		&s.CreatedAt,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, db.ErrNotFound
+	}
+
+	return &s, nil
+}
+
+func (r *repository) GetStocks(ctx context.Context, userId int32) ([]models.Stock, error) {
+	const query = `
+		SELECT
+			id,
+			name,
+			user_id,
+			amount,
+			created_at
+		FROM stock
+		WHERE user_id = $1 AND name = $2"
+	`
+
+	rows, err := r.pool.Query(ctx, query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	stocks := make([]models.Stock, 0)
+	for rows.Next() {
+		var s models.Stock
+		err = rows.Scan(
+			&s.Id,
+			&s.Name,
+			&s.UserId,
+			&s.Amount,
+			&s.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		stocks = append(stocks, s)
+	}
+
+	return stocks, nil
+}
+
+func (r *repository) UpdateStockAmount(ctx context.Context, id, amount int32) error {
+	const query = `
+		UPDATE stock
+		set amount = $2
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, id, amount)
+
+	return err
+}
+
+func (r *repository) AddStock(ctx context.Context, userId int32, name string, amount int32) error {
+	const query = `
+		INSERT INTO "user" (
+			name,
+			user_id,
+			amount
+		) VALUES (
+			$1, $2, $3
+		)
+	`
+
+	_, err := r.pool.Exec(ctx, query,
+		name,
+		userId,
+		amount,
+	)
+
+	return err
+}
+
+func (r *repository) RemoveStock(ctx context.Context, id int32) error {
+	const query = `
+		DELETE FROM stock
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, id)
+
+	return err
+}

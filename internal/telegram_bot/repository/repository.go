@@ -5,8 +5,8 @@ import (
 	"errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 )
 
 type repository struct {
@@ -17,7 +17,7 @@ func New(pool *pgxpool.Pool) *repository {
 	return &repository{pool: pool}
 }
 
-func (r repository) CreateUser(ctx context.Context, id int64, chatId int64, serverUserId int64) error {
+func (r *repository) CreateUser(ctx context.Context, id int64, chatId int64, serverUserId int32) error {
 	const query = `
 		INSERT INTO "user" (
 			id,
@@ -60,7 +60,7 @@ func (r *repository) GetUser(ctx context.Context, id int64) (*models.User, error
 	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, telegram_bot.ErrNotFound
+		return nil, db.ErrNotFound
 	}
 
 	return &u, nil

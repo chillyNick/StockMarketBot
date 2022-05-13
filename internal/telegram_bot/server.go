@@ -8,8 +8,9 @@ import (
 )
 
 type server struct {
-	bot  *tgbotapi.BotAPI
-	repo repository
+	bot        *tgbotapi.BotAPI
+	repo       repository
+	grpcClient pb.StockMarketServiceClient
 }
 
 func New(tgToken string, repo repository, debug bool) (*server, error) {
@@ -17,28 +18,30 @@ func New(tgToken string, repo repository, debug bool) (*server, error) {
 	if err != nil {
 		return nil, err
 	}
-	bot.Debug = debug
-
-	return &server{bot: bot, repo: repo}, nil
-}
-
-func (s *server) Serve() error {
-	updateConfig := tgbotapi.NewUpdate(0)
-	updates := s.bot.GetUpdatesChan(updateConfig)
 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	conn, err := grpc.Dial("localhost:6000", opts...)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer conn.Close()
 
-	client := pb.NewStockMarketServiceClient(conn)
+	bot.Debug = debug
+
+	return &server{
+		bot:        bot,
+		repo:       repo,
+		grpcClient: pb.NewStockMarketServiceClient(conn),
+	}, nil
+}
+
+func (s *server) Serve() error {
+	updateConfig := tgbotapi.NewUpdate(0)
+	updates := s.bot.GetUpdatesChan(updateConfig)
 
 	for update := range updates {
-		s.handle(update, client)
+		s.handle(update)
 	}
 
 	return nil

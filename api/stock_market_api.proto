@@ -1,17 +1,32 @@
 syntax = "proto3";
 
-option go_package="gitlab.ozon.dev/chillyNick/homework-2/pkg/api";
-
+import "google/protobuf/empty.proto";
 package api;
 
-message StockName {
+option go_package="gitlab.ozon.dev/chillyNick/homework-2/pkg/api";
+
+message UserId {
+  int32 id = 1;
+}
+
+message StockRequest {
   string name = 1;
+  int32 amount = 2;
+  UserId userId = 3;
 }
 
 message Stock {
-  StockName name = 1;
+  string name = 1;
+  int32 amount = 2;
+}
+
+message GetStocksResponse {
+  repeated Stock stocks = 1;
 }
 
 service StockMarketService {
-  rpc FindStock(StockName) returns (Stock) {}
+  rpc CreateUser(google.protobuf.Empty) returns (UserId) {}
+  rpc GetStocks(UserId) returns (GetStocksResponse) {}
+  rpc AddStock(StockRequest) returns (google.protobuf.Empty) {}
+  rpc RemoveStock(StockRequest) returns (google.protobuf.Empty) {}
 }

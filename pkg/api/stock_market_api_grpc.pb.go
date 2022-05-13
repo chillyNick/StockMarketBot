@@ -8,6 +8,7 @@ package api
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -22,7 +23,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StockMarketServiceClient interface {
-	FindStock(ctx context.Context, in *StockName, opts ...grpc.CallOption) (*Stock, error)
+	CreateUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*UserId, error)
+	GetStocks(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*GetStocksResponse, error)
+	AddStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	RemoveStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type stockMarketServiceClient struct {
@@ -33,9 +37,36 @@ func NewStockMarketServiceClient(cc grpc.ClientConnInterface) StockMarketService
 	return &stockMarketServiceClient{cc}
 }
 
-func (c *stockMarketServiceClient) FindStock(ctx context.Context, in *StockName, opts ...grpc.CallOption) (*Stock, error) {
-	out := new(Stock)
-	err := c.cc.Invoke(ctx, "/api.StockMarketService/FindStock", in, out, opts...)
+func (c *stockMarketServiceClient) CreateUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*UserId, error) {
+	out := new(UserId)
+	err := c.cc.Invoke(ctx, "/api.StockMarketService/CreateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *stockMarketServiceClient) GetStocks(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*GetStocksResponse, error) {
+	out := new(GetStocksResponse)
+	err := c.cc.Invoke(ctx, "/api.StockMarketService/GetStocks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *stockMarketServiceClient) AddStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/api.StockMarketService/AddStock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *stockMarketServiceClient) RemoveStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/api.StockMarketService/RemoveStock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +77,10 @@ func (c *stockMarketServiceClient) FindStock(ctx context.Context, in *StockName,
 // All implementations must embed UnimplementedStockMarketServiceServer
 // for forward compatibility
 type StockMarketServiceServer interface {
-	FindStock(context.Context, *StockName) (*Stock, error)
+	CreateUser(context.Context, *empty.Empty) (*UserId, error)
+	GetStocks(context.Context, *UserId) (*GetStocksResponse, error)
+	AddStock(context.Context, *StockRequest) (*empty.Empty, error)
+	RemoveStock(context.Context, *StockRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedStockMarketServiceServer()
 }
 
@@ -54,8 +88,17 @@ type StockMarketServiceServer interface {
 type UnimplementedStockMarketServiceServer struct {
 }
 
-func (UnimplementedStockMarketServiceServer) FindStock(context.Context, *StockName) (*Stock, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FindStock not implemented")
+func (UnimplementedStockMarketServiceServer) CreateUser(context.Context, *empty.Empty) (*UserId, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+}
+func (UnimplementedStockMarketServiceServer) GetStocks(context.Context, *UserId) (*GetStocksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStocks not implemented")
+}
+func (UnimplementedStockMarketServiceServer) AddStock(context.Context, *StockRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddStock not implemented")
+}
+func (UnimplementedStockMarketServiceServer) RemoveStock(context.Context, *StockRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveStock not implemented")
 }
 func (UnimplementedStockMarketServiceServer) mustEmbedUnimplementedStockMarketServiceServer() {}
 
@@ -70,20 +113,74 @@ func RegisterStockMarketServiceServer(s grpc.ServiceRegistrar, srv StockMarketSe
 	s.RegisterService(&StockMarketService_ServiceDesc, srv)
 }
 
-func _StockMarketService_FindStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StockName)
+func _StockMarketService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StockMarketServiceServer).FindStock(ctx, in)
+		return srv.(StockMarketServiceServer).CreateUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.StockMarketService/FindStock",
+		FullMethod: "/api.StockMarketService/CreateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StockMarketServiceServer).FindStock(ctx, req.(*StockName))
+		return srv.(StockMarketServiceServer).CreateUser(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StockMarketService_GetStocks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockMarketServiceServer).GetStocks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.StockMarketService/GetStocks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockMarketServiceServer).GetStocks(ctx, req.(*UserId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StockMarketService_AddStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StockRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockMarketServiceServer).AddStock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.StockMarketService/AddStock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockMarketServiceServer).AddStock(ctx, req.(*StockRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StockMarketService_RemoveStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StockRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockMarketServiceServer).RemoveStock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.StockMarketService/RemoveStock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockMarketServiceServer).RemoveStock(ctx, req.(*StockRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,8 +193,20 @@ var StockMarketService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*StockMarketServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "FindStock",
-			Handler:    _StockMarketService_FindStock_Handler,
+			MethodName: "CreateUser",
+			Handler:    _StockMarketService_CreateUser_Handler,
+		},
+		{
+			MethodName: "GetStocks",
+			Handler:    _StockMarketService_GetStocks_Handler,
+		},
+		{
+			MethodName: "AddStock",
+			Handler:    _StockMarketService_AddStock_Handler,
+		},
+		{
+			MethodName: "RemoveStock",
+			Handler:    _StockMarketService_RemoveStock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

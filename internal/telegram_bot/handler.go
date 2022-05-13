@@ -7,6 +7,10 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
 	"strconv"
 	"strings"
@@ -14,7 +18,7 @@ import (
 
 const brokenMessage = "Something broken please try again later"
 
-func (s *server) handle(update tgbotapi.Update, client pb.StockMarketServiceClient) {
+func (s *server) handle(update tgbotapi.Update) {
 	if update.Message == nil {
 		return
 	}
@@ -40,14 +44,26 @@ func (s *server) handleCommand(msg *tgbotapi.Message) {
 		return
 	}
 
-	_, ok := s.getUser(msg.From.ID, msg.Chat.ID)
+	u, ok := s.getUser(msg.From.ID, msg.Chat.ID)
 	if !ok {
+		s.send(tgbotapi.NewMessage(msg.Chat.ID, "Firstly type /start"))
+
 		return
 	}
 
 	switch msg.Command() {
 	case "show":
-		s.send(tgbotapi.NewMessage(msg.Chat.ID, "Show current stocks"))
+		stocks, err := s.grpcClient.GetStocks(context.Background(), &pb.UserId{Id: u.ServerUserId})
+		if err != nil {
+			log.Println(err)
+			s.send(tgbotapi.NewMessage(msg.Chat.ID, brokenMessage))
+		}
+		text = "Portfolio:\n"
+		for _, stock := range stocks.GetStocks() {
+			text += stock.GetName() + " " + string(stock.GetAmount())
+		}
+
+		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	case "diff":
 		var periodKeyboard = tgbotapi.NewOneTimeReplyKeyboard(
 			tgbotapi.NewKeyboardButtonRow(
@@ -78,7 +94,15 @@ func (s *server) handleCommand(msg *tgbotapi.Message) {
 
 		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	case "remove_stock":
-		s.send(tgbotapi.NewMessage(msg.Chat.ID, ""))
+		err := s.repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateRemoveStock)
+		if err != nil {
+			log.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
+			text = brokenMessage
+		} else {
+			text = "Send a message in the next format: stockName amount"
+		}
+
+		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	case "add_notification":
 		s.send(tgbotapi.NewMessage(msg.Chat.ID, ""))
 	case "remove_notification":
@@ -96,7 +120,7 @@ func (s *server) handleText(msg *tgbotapi.Message) {
 	var text string
 	switch u.State {
 	case models.UserStateAddStock:
-		text, err = handleAddStockText(msg)
+		text, err = s.handleAddStockText(msg, u)
 		if err != nil {
 			log.Printf("something broken %v\n", err)
 		} else {
@@ -107,6 +131,16 @@ func (s *server) handleText(msg *tgbotapi.Message) {
 		}
 		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	case models.UserStateRemoveStock:
+		text, err = s.handleRemoveStockText(msg, u)
+		if err != nil {
+			log.Printf("something broken %v\n", err)
+		} else {
+			err = s.repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateMenu)
+			if err != nil {
+				log.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
+			}
+		}
+		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	case models.UserStateDiff:
 	case models.UserStateAddNotification:
 	case models.UserStateRemoveNotification:
@@ -124,7 +158,7 @@ func (s *server) getUser(id, chatId int64) (*models.User, bool) {
 	}
 
 	var text string
-	if errors.Is(err, ErrNotFound) {
+	if errors.Is(err, db.ErrNotFound) {
 		text = "Firstly type /start"
 	} else {
 		log.Printf("Failed to get user by id:%v err: %v\n", id, err)
@@ -138,9 +172,19 @@ func (s *server) getUser(id, chatId int64) (*models.User, bool) {
 }
 
 func (s *server) handleStartCommand(msg *tgbotapi.Message) string {
-	//todo firstly create user at server and check if user already exist in db
+	_, ok := s.getUser(msg.From.ID, msg.Chat.ID)
+	if ok {
+		return "Welcome to the stock market bot. To see all available command type /help"
+	}
 
-	err := s.repo.CreateUser(context.Background(), msg.From.ID, msg.Chat.ID, 0)
+	id, err := s.grpcClient.CreateUser(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		log.Printf("Failed to create user %v\n", err)
+
+		return brokenMessage
+	}
+
+	err = s.repo.CreateUser(context.Background(), msg.From.ID, msg.Chat.ID, id.Id)
 	if err != nil {
 		log.Printf("Failed to create user %v\n", err)
 
@@ -150,7 +194,7 @@ func (s *server) handleStartCommand(msg *tgbotapi.Message) string {
 	return "Welcome to the stock market bot. To see all available command type /help"
 }
 
-func handleAddStockText(msg *tgbotapi.Message) (string, error) {
+func (s *server) handleAddStockText(msg *tgbotapi.Message, u *models.User) (string, error) {
 	splitMsg := strings.Split(msg.Text, " ")
 	if len(splitMsg) != 2 {
 		return "Type in the next format stockName amount", errors.New("")
@@ -161,16 +205,47 @@ func handleAddStockText(msg *tgbotapi.Message) (string, error) {
 		return "amount must be a positive number", errors.New("")
 	}
 
-	//if stock == "" {
-	//	return fmt.Sprintf("Couldn't found stock with name %v", splitMsg[1])
-	//}
-	//
-	//stockRes, err := client.FindStock(context.Background(), &pb.StockName{Name: splitMsg[1]})
-	//if err != nil {
-	//	log.Println(err)
-	//} else {
-	//	log.Printf("successfully client call %v\n", stockRes.GetName())
-	//}
+	_, err = s.grpcClient.AddStock(context.Background(), &pb.StockRequest{
+		Name:   splitMsg[0],
+		Amount: int32(amount),
+		UserId: &pb.UserId{Id: u.ServerUserId},
+	})
 
-	return fmt.Sprintf("%v %v was added into portfolio", amount, splitMsg[0]), nil
+	if err == nil {
+		return fmt.Sprintf("%v %v was added into portfolio", amount, splitMsg[0]), nil
+	}
+
+	if status.Code(err) == codes.NotFound {
+		return "Stock with such name not found", err
+	}
+
+	return brokenMessage, err
+}
+
+func (s *server) handleRemoveStockText(msg *tgbotapi.Message, u *models.User) (string, error) {
+	splitMsg := strings.Split(msg.Text, " ")
+	if len(splitMsg) != 2 {
+		return "Type in the next format stockName amount", errors.New("")
+	}
+
+	amount, err := strconv.Atoi(splitMsg[1])
+	if err != nil || amount <= 0 {
+		return "amount must be a positive number", errors.New("")
+	}
+
+	_, err = s.grpcClient.RemoveStock(context.Background(), &pb.StockRequest{
+		Name:   splitMsg[0],
+		Amount: int32(amount),
+		UserId: &pb.UserId{Id: u.ServerUserId},
+	})
+
+	if err == nil {
+		return fmt.Sprintf("%v %v was remove into portfolio", amount, splitMsg[0]), nil
+	}
+
+	if status.Code(err) == codes.NotFound {
+		return "Stock with such name not found or you don't have in portfolio", err
+	}
+
+	return brokenMessage, err
 }
