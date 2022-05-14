@@ -30,6 +30,8 @@ func (s *server) handle(update tgbotapi.Update) {
 	}
 }
 
+var periods = []string{"hour", "day", "week", "all"}
+
 func (s *server) handleCommand(msg *tgbotapi.Message) {
 	var text string
 	switch msg.Command() {
@@ -60,7 +62,7 @@ func (s *server) handleCommand(msg *tgbotapi.Message) {
 		}
 		text = "Portfolio:\n"
 		for _, stock := range stocks.GetStocks() {
-			text += stock.GetName() + " " + string(stock.GetAmount())
+			text += fmt.Sprintf("%v %v \n", stock.GetName(), stock.GetAmount())
 		}
 
 		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
@@ -142,6 +144,44 @@ func (s *server) handleText(msg *tgbotapi.Message) {
 		}
 		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	case models.UserStateDiff:
+		ok := false
+		for _, p := range periods {
+			if msg.Text == p {
+				ok = true
+				break
+			}
+		}
+
+		if !ok {
+			s.send(tgbotapi.NewMessage(msg.Chat.ID, "Incorrect period"))
+
+			return
+		}
+
+		changes, err := s.grpcClient.GetPortfolioChanges(context.Background(), &pb.GetPortfolioChangesRequest{Period: pb.Period(pb.Period_value[strings.ToUpper(msg.Text)]), UserId: &pb.UserId{Id: u.ServerUserId}})
+		if err != nil {
+			s.send(tgbotapi.NewMessage(msg.Chat.ID, brokenMessage))
+
+			return
+		}
+
+		err = s.repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateMenu)
+		if err != nil {
+			log.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
+			s.send(tgbotapi.NewMessage(msg.Chat.ID, brokenMessage))
+
+			return
+		}
+
+		text = fmt.Sprintf("Portfolio changes by %v:\n", msg.Text)
+		for _, ch := range changes.GetStocks() {
+			text += fmt.Sprintf("%v %v %v \n", ch.Stock.GetName(), ch.Stock.GetAmount(), ch.GetOldPrice()-ch.GetCurrentPrice())
+		}
+
+		msgConfig := tgbotapi.NewMessage(msg.Chat.ID, text)
+		msgConfig.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+
+		s.send(msgConfig)
 	case models.UserStateAddNotification:
 	case models.UserStateRemoveNotification:
 

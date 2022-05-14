@@ -7,6 +7,7 @@ CREATE TABLE "stock" (
     name VARCHAR NOT NULL,
     user_id INTEGER NOT NULL,
     amount INTEGER NOT NULL,
+    price DOUBLE PRECISION NOT NULL,
     created_at timestamp DEFAULT current_timestamp,
     CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES "user"(id),
     UNIQUE (name, user_id)

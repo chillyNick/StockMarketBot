@@ -1,4 +1,4 @@
-CREATE TYPE user_state AS ENUM ('menu', 'add_stock', 'remove_stock, diff, add_notification, remove_notification');
+CREATE TYPE user_state AS ENUM ('menu', 'add_stock', 'remove_stock', 'diff', 'add_notification', 'remove_notification');
 
 CREATE TABLE "user"(
     id BIGINT PRIMARY KEY,

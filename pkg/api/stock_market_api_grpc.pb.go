@@ -27,6 +27,7 @@ type StockMarketServiceClient interface {
 	GetStocks(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*GetStocksResponse, error)
 	AddStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemoveStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetPortfolioChanges(ctx context.Context, in *GetPortfolioChangesRequest, opts ...grpc.CallOption) (*GetPortfolioChangesResponse, error)
 }
 
 type stockMarketServiceClient struct {
@@ -73,6 +74,15 @@ func (c *stockMarketServiceClient) RemoveStock(ctx context.Context, in *StockReq
 	return out, nil
 }
 
+func (c *stockMarketServiceClient) GetPortfolioChanges(ctx context.Context, in *GetPortfolioChangesRequest, opts ...grpc.CallOption) (*GetPortfolioChangesResponse, error) {
+	out := new(GetPortfolioChangesResponse)
+	err := c.cc.Invoke(ctx, "/api.StockMarketService/GetPortfolioChanges", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StockMarketServiceServer is the server API for StockMarketService service.
 // All implementations must embed UnimplementedStockMarketServiceServer
 // for forward compatibility
@@ -81,6 +91,7 @@ type StockMarketServiceServer interface {
 	GetStocks(context.Context, *UserId) (*GetStocksResponse, error)
 	AddStock(context.Context, *StockRequest) (*empty.Empty, error)
 	RemoveStock(context.Context, *StockRequest) (*empty.Empty, error)
+	GetPortfolioChanges(context.Context, *GetPortfolioChangesRequest) (*GetPortfolioChangesResponse, error)
 	mustEmbedUnimplementedStockMarketServiceServer()
 }
 
@@ -99,6 +110,9 @@ func (UnimplementedStockMarketServiceServer) AddStock(context.Context, *StockReq
 }
 func (UnimplementedStockMarketServiceServer) RemoveStock(context.Context, *StockRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveStock not implemented")
+}
+func (UnimplementedStockMarketServiceServer) GetPortfolioChanges(context.Context, *GetPortfolioChangesRequest) (*GetPortfolioChangesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPortfolioChanges not implemented")
 }
 func (UnimplementedStockMarketServiceServer) mustEmbedUnimplementedStockMarketServiceServer() {}
 
@@ -185,6 +199,24 @@ func _StockMarketService_RemoveStock_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StockMarketService_GetPortfolioChanges_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPortfolioChangesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockMarketServiceServer).GetPortfolioChanges(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.StockMarketService/GetPortfolioChanges",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockMarketServiceServer).GetPortfolioChanges(ctx, req.(*GetPortfolioChangesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StockMarketService_ServiceDesc is the grpc.ServiceDesc for StockMarketService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -207,6 +239,10 @@ var StockMarketService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveStock",
 			Handler:    _StockMarketService_RemoveStock_Handler,
+		},
+		{
+			MethodName: "GetPortfolioChanges",
+			Handler:    _StockMarketService_GetPortfolioChanges_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

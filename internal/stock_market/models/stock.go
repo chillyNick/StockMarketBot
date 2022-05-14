@@ -7,5 +7,6 @@ type Stock struct {
 	Name      string
 	UserId    int32
 	Amount    int32
+	Price     float64
 	CreatedAt time.Time
 }

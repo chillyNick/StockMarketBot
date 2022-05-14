@@ -2,17 +2,24 @@ package main
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/repository"
+	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
-
-	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 )
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file %v", err)
+	}
+}
 
 func main() {
 	add := fmt.Sprintf(

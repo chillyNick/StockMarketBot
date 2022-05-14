@@ -10,18 +10,40 @@ message UserId {
 }
 
 message StockRequest {
-  string name = 1;
-  int32 amount = 2;
+  string name   = 1;
+  int32  amount  = 2;
   UserId userId = 3;
 }
 
 message Stock {
-  string name = 1;
-  int32 amount = 2;
+  string name   = 1;
+  int32  amount = 2;
+}
+
+message StockChanges {
+  Stock  stock        = 1;
+  double oldPrice  = 2;
+  double currentPrice = 3;
 }
 
 message GetStocksResponse {
   repeated Stock stocks = 1;
+}
+
+enum Period {
+  HOUR = 0;
+  DAY  = 1;
+  WEEK = 2;
+  ALL  = 3;
+}
+
+message GetPortfolioChangesRequest {
+  UserId userId = 1;
+  Period period = 2;
+}
+
+message GetPortfolioChangesResponse {
+  repeated StockChanges stocks = 1;
 }
 
 service StockMarketService {
@@ -29,4 +51,5 @@ service StockMarketService {
   rpc GetStocks(UserId) returns (GetStocksResponse) {}
   rpc AddStock(StockRequest) returns (google.protobuf.Empty) {}
   rpc RemoveStock(StockRequest) returns (google.protobuf.Empty) {}
+  rpc GetPortfolioChanges(GetPortfolioChangesRequest) returns (GetPortfolioChangesResponse) {}
 }

@@ -34,9 +34,10 @@ func (r *repository) GetStock(ctx context.Context, userId int32, name string) (*
 			name,
 			user_id,
 			amount,
+			price,
 			created_at
 		FROM stock
-		WHERE user_id = $1 AND name = $2"
+		WHERE user_id = $1 AND name = $2
 	`
 
 	s := models.Stock{}
@@ -46,6 +47,7 @@ func (r *repository) GetStock(ctx context.Context, userId int32, name string) (*
 		&s.Name,
 		&s.UserId,
 		&s.Amount,
+		&s.Price,
 		&s.CreatedAt,
 	)
 
@@ -63,9 +65,10 @@ func (r *repository) GetStocks(ctx context.Context, userId int32) ([]models.Stoc
 			name,
 			user_id,
 			amount,
+			price,
 			created_at
 		FROM stock
-		WHERE user_id = $1 AND name = $2"
+		WHERE user_id = $1
 	`
 
 	rows, err := r.pool.Query(ctx, query, userId)
@@ -82,6 +85,7 @@ func (r *repository) GetStocks(ctx context.Context, userId int32) ([]models.Stoc
 			&s.Name,
 			&s.UserId,
 			&s.Amount,
+			&s.Price,
 			&s.CreatedAt,
 		)
 		if err != nil {
@@ -94,26 +98,24 @@ func (r *repository) GetStocks(ctx context.Context, userId int32) ([]models.Stoc
 	return stocks, nil
 }
 
-func (r *repository) UpdateStockAmount(ctx context.Context, id, amount int32) error {
+func (r *repository) UpdateStock(ctx context.Context, id, amount int32, price float64) error {
 	const query = `
 		UPDATE stock
-		set amount = $2
+		set amount = $2, price = $3
 		WHERE id = $1
 	`
 
-	_, err := r.pool.Exec(ctx, query, id, amount)
+	_, err := r.pool.Exec(ctx, query, id, amount, price)
 
 	return err
 }
 
-func (r *repository) AddStock(ctx context.Context, userId int32, name string, amount int32) error {
+func (r *repository) AddStock(ctx context.Context, userId int32, name string, amount int32, price float64) error {
 	const query = `
-		INSERT INTO "user" (
-			name,
-			user_id,
-			amount
+		INSERT INTO stock (
+			name, user_id, amount, price
 		) VALUES (
-			$1, $2, $3
+			$1, $2, $3, $4
 		)
 	`
 
@@ -121,6 +123,7 @@ func (r *repository) AddStock(ctx context.Context, userId int32, name string, am
 		name,
 		userId,
 		amount,
+		price,
 	)
 
 	return err
