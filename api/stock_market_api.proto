@@ -46,10 +46,17 @@ message GetPortfolioChangesResponse {
   repeated StockChanges stocks = 1;
 }
 
+message AddNotificationRequest {
+  UserId userId = 1;
+  string stockName = 2;
+  double threshold = 3;
+}
+
 service StockMarketService {
   rpc CreateUser(google.protobuf.Empty) returns (UserId) {}
   rpc GetStocks(UserId) returns (GetStocksResponse) {}
   rpc AddStock(StockRequest) returns (google.protobuf.Empty) {}
   rpc RemoveStock(StockRequest) returns (google.protobuf.Empty) {}
   rpc GetPortfolioChanges(GetPortfolioChangesRequest) returns (GetPortfolioChangesResponse) {}
+  rpc AddNotification(AddNotificationRequest) returns (google.protobuf.Empty) {}
 }

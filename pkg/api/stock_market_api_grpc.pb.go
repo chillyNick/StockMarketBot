@@ -28,6 +28,7 @@ type StockMarketServiceClient interface {
 	AddStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemoveStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	GetPortfolioChanges(ctx context.Context, in *GetPortfolioChangesRequest, opts ...grpc.CallOption) (*GetPortfolioChangesResponse, error)
+	AddNotification(ctx context.Context, in *AddNotificationRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type stockMarketServiceClient struct {
@@ -83,6 +84,15 @@ func (c *stockMarketServiceClient) GetPortfolioChanges(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *stockMarketServiceClient) AddNotification(ctx context.Context, in *AddNotificationRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/api.StockMarketService/AddNotification", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StockMarketServiceServer is the server API for StockMarketService service.
 // All implementations must embed UnimplementedStockMarketServiceServer
 // for forward compatibility
@@ -92,6 +102,7 @@ type StockMarketServiceServer interface {
 	AddStock(context.Context, *StockRequest) (*empty.Empty, error)
 	RemoveStock(context.Context, *StockRequest) (*empty.Empty, error)
 	GetPortfolioChanges(context.Context, *GetPortfolioChangesRequest) (*GetPortfolioChangesResponse, error)
+	AddNotification(context.Context, *AddNotificationRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedStockMarketServiceServer()
 }
 
@@ -113,6 +124,9 @@ func (UnimplementedStockMarketServiceServer) RemoveStock(context.Context, *Stock
 }
 func (UnimplementedStockMarketServiceServer) GetPortfolioChanges(context.Context, *GetPortfolioChangesRequest) (*GetPortfolioChangesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPortfolioChanges not implemented")
+}
+func (UnimplementedStockMarketServiceServer) AddNotification(context.Context, *AddNotificationRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddNotification not implemented")
 }
 func (UnimplementedStockMarketServiceServer) mustEmbedUnimplementedStockMarketServiceServer() {}
 
@@ -217,6 +231,24 @@ func _StockMarketService_GetPortfolioChanges_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StockMarketService_AddNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockMarketServiceServer).AddNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.StockMarketService/AddNotification",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockMarketServiceServer).AddNotification(ctx, req.(*AddNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StockMarketService_ServiceDesc is the grpc.ServiceDesc for StockMarketService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -243,6 +275,10 @@ var StockMarketService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPortfolioChanges",
 			Handler:    _StockMarketService_GetPortfolioChanges_Handler,
+		},
+		{
+			MethodName: "AddNotification",
+			Handler:    _StockMarketService_AddNotification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

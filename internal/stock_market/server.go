@@ -60,7 +60,7 @@ func (s *stockMarketServiceServer) AddStock(ctx context.Context, req *pb.StockRe
 	if err != nil {
 		log.Println(err)
 
-		return new(empty.Empty), status.Error(codes.Internal, "Smth wrong with server")
+		return nil, status.Error(codes.Internal, "Smth wrong with server")
 	}
 
 	if q == nil {
@@ -71,7 +71,7 @@ func (s *stockMarketServiceServer) AddStock(ctx context.Context, req *pb.StockRe
 	if err != nil && !errors.Is(err, db.ErrNotFound) {
 		log.Println(err)
 
-		return new(empty.Empty), status.Error(codes.Internal, "Internal error")
+		return nil, status.Error(codes.Internal, "Internal error")
 	}
 
 	if errors.Is(err, db.ErrNotFound) {
@@ -79,7 +79,7 @@ func (s *stockMarketServiceServer) AddStock(ctx context.Context, req *pb.StockRe
 		if err != nil {
 			log.Println(err)
 
-			return new(empty.Empty), status.Error(codes.Internal, "Internal error")
+			return nil, status.Error(codes.Internal, "Internal error")
 		}
 	} else {
 		amount := stock.Amount + req.GetAmount()
@@ -106,11 +106,11 @@ func (s *stockMarketServiceServer) RemoveStock(ctx context.Context, req *pb.Stoc
 	if err != nil && !errors.Is(err, db.ErrNotFound) {
 		log.Println(err)
 
-		return new(empty.Empty), status.Error(codes.Internal, "Internal error")
+		return nil, status.Error(codes.Internal, "Internal error")
 	}
 
 	if errors.Is(err, db.ErrNotFound) {
-		return new(empty.Empty), status.Error(codes.NotFound, "You don't have stock in the portfolio")
+		return nil, status.Error(codes.NotFound, "You don't have stock in the portfolio")
 	}
 
 	if stock.Amount <= req.GetAmount() {
@@ -122,7 +122,7 @@ func (s *stockMarketServiceServer) RemoveStock(ctx context.Context, req *pb.Stoc
 	if err != nil {
 		log.Println(err)
 
-		return new(empty.Empty), status.Error(codes.Internal, "Internal error")
+		return nil, status.Error(codes.Internal, "Internal error")
 	}
 
 	return new(empty.Empty), nil
@@ -201,4 +201,31 @@ func (s *stockMarketServiceServer) GetPortfolioChanges(ctx context.Context, req 
 	}
 
 	return &res, nil
+}
+
+func (s *stockMarketServiceServer) AddNotification(ctx context.Context, req *pb.AddNotificationRequest) (*empty.Empty, error) {
+	q, err := quote.Get(req.GetStockName())
+	if err != nil {
+		log.Println(err)
+
+		return nil, status.Errorf(codes.Internal, "Smth wrong with server")
+	}
+
+	if q == nil {
+		return nil, status.Error(codes.NotFound, "Incorrect stock name")
+	}
+
+	var nType string
+	if q.Bid > req.GetThreshold() {
+		nType = models.NotificationTypeDown
+	} else {
+		nType = models.NotificationTypeUp
+	}
+
+	err = s.repo.AddNotification(ctx, req.GetUserId().GetId(), req.GetStockName(), req.GetThreshold(), nType)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Smth wrong with server")
+	}
+
+	return new(empty.Empty), nil
 }

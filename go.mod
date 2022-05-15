@@ -5,6 +5,7 @@ go 1.18
 require github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 
 require (
+	github.com/golang/protobuf v1.5.2
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/joho/godotenv v1.4.0
 	github.com/piquette/finance-go v1.0.0
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -28,5 +28,5 @@ require (
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
+	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 )

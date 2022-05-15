@@ -27,6 +27,34 @@ func (r *repository) CreateUser(ctx context.Context) (int32, error) {
 	return id, err
 }
 
+func (r *repository) GetUserIdsWithNotifications(ctx context.Context) ([]int32, error) {
+	const query = `
+		SELECT u.id
+		FROM "user" AS u
+        JOIN notification AS n ON u.id = n.user_id
+		GROUP BY u.id
+	`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := make([]int32, 0)
+	for rows.Next() {
+		var id int32
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
 func (r *repository) GetStock(ctx context.Context, userId int32, name string) (*models.Stock, error) {
 	const query = `
 		SELECT
@@ -138,4 +166,72 @@ func (r *repository) RemoveStock(ctx context.Context, id int32) error {
 	_, err := r.pool.Exec(ctx, query, id)
 
 	return err
+}
+
+func (r *repository) AddNotification(ctx context.Context, userId int32, stockName string, threshold float64, nType string) error {
+	const query = `
+		INSERT INTO notification (
+			stock_name, user_id, threshold, type
+		) VALUES (
+			$1, $2, $3, $4
+		)
+	`
+
+	_, err := r.pool.Exec(ctx, query,
+		stockName,
+		userId,
+		threshold,
+		nType,
+	)
+
+	return err
+}
+
+func (r *repository) RemoveNotification(ctx context.Context, id int32) error {
+	const query = `
+		DELETE FROM notification
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, id)
+
+	return err
+}
+
+func (r *repository) GetNotifications(ctx context.Context, userId int32) ([]models.Notification, error) {
+	const query = `
+		SELECT
+			id,
+			stock_name,
+			user_id,
+			threshold,
+			type
+		FROM notification
+		WHERE user_id = $1
+	`
+
+	rows, err := r.pool.Query(ctx, query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ntfs := make([]models.Notification, 0)
+	for rows.Next() {
+		var n models.Notification
+		err = rows.Scan(
+			&n.Id,
+			&n.StockName,
+			&n.UserId,
+			&n.Threshold,
+			&n.Type,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		ntfs = append(ntfs, n)
+	}
+
+	return ntfs, nil
 }

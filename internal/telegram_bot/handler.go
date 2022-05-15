@@ -106,9 +106,15 @@ func (s *server) handleCommand(msg *tgbotapi.Message) {
 
 		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	case "add_notification":
-		s.send(tgbotapi.NewMessage(msg.Chat.ID, ""))
-	case "remove_notification":
-		s.send(tgbotapi.NewMessage(msg.Chat.ID, ""))
+		err := s.repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateAddNotification)
+		if err != nil {
+			log.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
+			text = brokenMessage
+		} else {
+			text = "Send a message in the next format: stockName threshold"
+		}
+
+		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	}
 }
 
@@ -183,8 +189,16 @@ func (s *server) handleText(msg *tgbotapi.Message) {
 
 		s.send(msgConfig)
 	case models.UserStateAddNotification:
-	case models.UserStateRemoveNotification:
-
+		text, err = s.handleAddNotificationText(msg, u)
+		if err != nil {
+			log.Printf("something broken %v\n", err)
+		} else {
+			err = s.repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateMenu)
+			if err != nil {
+				log.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
+			}
+		}
+		s.send(tgbotapi.NewMessage(msg.Chat.ID, text))
 	default:
 		s.send(tgbotapi.NewMessage(msg.Chat.ID, "NOTHING TO SEND!!!"))
 	}
@@ -285,6 +299,34 @@ func (s *server) handleRemoveStockText(msg *tgbotapi.Message, u *models.User) (s
 
 	if status.Code(err) == codes.NotFound {
 		return "Stock with such name not found or you don't have in portfolio", err
+	}
+
+	return brokenMessage, err
+}
+
+func (s *server) handleAddNotificationText(msg *tgbotapi.Message, u *models.User) (string, error) {
+	splitMsg := strings.Split(msg.Text, " ")
+	if len(splitMsg) != 2 {
+		return "Type in the next format stockName threshold", errors.New("")
+	}
+
+	threshold, err := strconv.ParseFloat(splitMsg[1], 64)
+	if err != nil {
+		return "Threshold must be a positive decimal number", errors.New("")
+	}
+
+	_, err = s.grpcClient.AddNotification(context.Background(), &pb.AddNotificationRequest{
+		UserId:    &pb.UserId{Id: u.ServerUserId},
+		StockName: splitMsg[0],
+		Threshold: threshold,
+	})
+
+	if err == nil {
+		return fmt.Sprintf("Notification was added"), nil
+	}
+
+	if status.Code(err) == codes.NotFound {
+		return "Stock with such name not found", err
 	}
 
 	return brokenMessage, err
