@@ -6,6 +6,7 @@ import (
 	"github.com/piquette/finance-go/quote"
 	"github.com/streadway/amqp"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/models"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/repository"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/queue"
 	"time"
@@ -13,7 +14,7 @@ import (
 
 const sleepTime = time.Hour
 
-func TrackNotification(repo Repository, url string) {
+func TrackNotification(repo repository.Repository, url string) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		logger.Error.Fatalf("can't connect to AMQP: %s", err)

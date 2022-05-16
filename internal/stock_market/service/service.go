@@ -9,8 +9,8 @@ import (
 	"github.com/piquette/finance-go/chart"
 	"github.com/piquette/finance-go/datetime"
 	"github.com/piquette/finance-go/quote"
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/models"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/repository"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
@@ -20,11 +20,11 @@ import (
 )
 
 type stockMarketServiceServer struct {
-	repo stock_market.Repository
+	repo repository.Repository
 	pb.UnimplementedStockMarketServiceServer
 }
 
-func New(repo stock_market.Repository) *stockMarketServiceServer {
+func New(repo repository.Repository) *stockMarketServiceServer {
 	return &stockMarketServiceServer{repo: repo}
 }
 

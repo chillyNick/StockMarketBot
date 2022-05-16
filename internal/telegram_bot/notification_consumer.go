@@ -55,7 +55,7 @@ func TrackNotification(s *Server, url string) {
 			continue
 		}
 
-		u, err := s.Repo.GetUserByServerUserId(context.Background(), notification.UserId)
+		u, err := s.repo.GetUserByServerUserId(context.Background(), notification.UserId)
 		if err != nil {
 			logger.Error.Printf("Error to get user by userServerId: %v %s", notification.UserId, err)
 			continue

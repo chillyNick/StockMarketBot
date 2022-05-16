@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/repository"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/repository/pgx_repository"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"google.golang.org/grpc"
@@ -45,7 +45,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	bot, err := telegram_bot.New(os.Getenv("TELEGRAM_APITOKEN"), repository.New(adp), conn, false)
+	bot, err := telegram_bot.New(os.Getenv("TELEGRAM_APITOKEN"), pgx_repository.New(adp), conn, false)
 	if err != nil {
 		logger.Error.Fatal(err)
 	}

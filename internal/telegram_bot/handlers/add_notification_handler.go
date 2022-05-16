@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
@@ -16,8 +15,8 @@ import (
 
 var addNotificationResponse = "Send a message in the next format: ticker amount"
 
-func handleAddNotificationCommand(s *telegram_bot.Server, msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
-	err := s.Repo.UpdateUserState(context.Background(), user.Id, models.UserStateAddNotification)
+func (h *Handler) handleAddNotificationCommand(msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
+	err := h.repo.UpdateUserState(context.Background(), user.Id, models.UserStateAddNotification)
 	if err != nil {
 		logger.Error.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
 		return tgbotapi.NewMessage(msg.From.ID, brokenMessage)
@@ -26,7 +25,7 @@ func handleAddNotificationCommand(s *telegram_bot.Server, msg *tgbotapi.Message,
 	return tgbotapi.NewMessage(msg.From.ID, addNotificationResponse)
 }
 
-func handleAddNotificationText(s *telegram_bot.Server, msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
+func (h *Handler) handleAddNotificationText(msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
 	splitMsg := strings.Split(msg.Text, " ")
 	if len(splitMsg) != 2 {
 		return tgbotapi.NewMessage(msg.From.ID, addNotificationResponse)
@@ -37,7 +36,7 @@ func handleAddNotificationText(s *telegram_bot.Server, msg *tgbotapi.Message, us
 		return tgbotapi.NewMessage(msg.From.ID, "Threshold must be a positive decimal number")
 	}
 
-	_, err = s.GrpcClient.AddNotification(context.Background(), &pb.AddNotificationRequest{
+	_, err = h.grpcClient.AddNotification(context.Background(), &pb.AddNotificationRequest{
 		UserId:    &pb.UserId{Id: user.ServerUserId},
 		StockName: splitMsg[0],
 		Threshold: threshold,
@@ -52,7 +51,7 @@ func handleAddNotificationText(s *telegram_bot.Server, msg *tgbotapi.Message, us
 		return tgbotapi.NewMessage(msg.Chat.ID, text)
 	}
 
-	err = s.Repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateMenu)
+	err = h.repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateMenu)
 	if err != nil {
 		logger.Error.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
 

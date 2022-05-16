@@ -3,6 +3,7 @@ package telegram_bot
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/handlers"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/repository"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"google.golang.org/grpc"
@@ -10,11 +11,11 @@ import (
 
 type Server struct {
 	bot        *tgbotapi.BotAPI
-	Repo       Repository
-	GrpcClient pb.StockMarketServiceClient
+	repo       repository.Repository
+	grpcClient pb.StockMarketServiceClient
 }
 
-func New(tgToken string, repo Repository, conn grpc.ClientConnInterface, debug bool) (*Server, error) {
+func New(tgToken string, repo repository.Repository, conn grpc.ClientConnInterface, debug bool) (*Server, error) {
 	bot, err := tgbotapi.NewBotAPI(tgToken)
 	if err != nil {
 		return nil, err
@@ -24,18 +25,20 @@ func New(tgToken string, repo Repository, conn grpc.ClientConnInterface, debug b
 
 	return &Server{
 		bot:        bot,
-		Repo:       repo,
-		GrpcClient: pb.NewStockMarketServiceClient(conn),
+		repo:       repo,
+		grpcClient: pb.NewStockMarketServiceClient(conn),
 	}, nil
 }
 
 func (s *Server) Serve() {
-	logger.Info.Println("Start to handle tg messages")
+	logger.Info.Println("Ready to handle tg messages")
+
 	updateConfig := tgbotapi.NewUpdate(0)
 	updates := s.bot.GetUpdatesChan(updateConfig)
+	handler := handlers.New(s.repo, s.grpcClient)
 
 	for update := range updates {
-		msgConf := handlers.HandleUpdate(s, update)
+		msgConf := handler.HandleUpdate(update)
 		if msgConf != nil {
 			s.send(msgConf)
 		}

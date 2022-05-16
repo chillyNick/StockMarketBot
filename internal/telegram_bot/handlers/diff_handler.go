@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
@@ -27,8 +26,8 @@ func init() {
 	)
 }
 
-func handleDiffCommand(s *telegram_bot.Server, msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
-	err := s.Repo.UpdateUserState(context.Background(), user.Id, models.UserStateDiff)
+func (h *Handler) handleDiffCommand(msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
+	err := h.repo.UpdateUserState(context.Background(), user.Id, models.UserStateDiff)
 	if err != nil {
 		logger.Error.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
 
@@ -41,12 +40,12 @@ func handleDiffCommand(s *telegram_bot.Server, msg *tgbotapi.Message, user *mode
 	return msgCnf
 }
 
-func handleDiffText(s *telegram_bot.Server, msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
+func (h *Handler) handleDiffText(msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
 	if validatePeriod(msg.Text) {
 		return tgbotapi.NewMessage(msg.Chat.ID, "Incorrect period")
 	}
 
-	changes, err := s.GrpcClient.GetPortfolioChanges(
+	changes, err := h.grpcClient.GetPortfolioChanges(
 		context.Background(),
 		&pb.GetPortfolioChangesRequest{
 			Period: pb.Period(pb.Period_value[strings.ToUpper(msg.Text)]),
@@ -59,7 +58,7 @@ func handleDiffText(s *telegram_bot.Server, msg *tgbotapi.Message, user *models.
 		return tgbotapi.NewMessage(msg.Chat.ID, brokenMessage)
 	}
 
-	err = s.Repo.UpdateUserState(context.Background(), user.Id, models.UserStateMenu)
+	err = h.repo.UpdateUserState(context.Background(), user.Id, models.UserStateMenu)
 	if err != nil {
 		logger.Error.Printf("Failed to update user state with id:%v err: %v\n", user.Id, err)
 

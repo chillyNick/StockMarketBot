@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
@@ -16,8 +15,8 @@ import (
 
 var addStockResponse = "Send a message in the next format: ticker amount"
 
-func handleAddStockCommand(s *telegram_bot.Server, msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
-	err := s.Repo.UpdateUserState(context.Background(), user.Id, models.UserStateAddStock)
+func (h *Handler) handleAddStockCommand(msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
+	err := h.repo.UpdateUserState(context.Background(), user.Id, models.UserStateAddStock)
 	if err != nil {
 		logger.Error.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
 		return tgbotapi.NewMessage(msg.From.ID, brokenMessage)
@@ -26,7 +25,7 @@ func handleAddStockCommand(s *telegram_bot.Server, msg *tgbotapi.Message, user *
 	return tgbotapi.NewMessage(msg.From.ID, addStockResponse)
 }
 
-func handleAddStockText(s *telegram_bot.Server, msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
+func (h *Handler) handleAddStockText(msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
 	splitMsg := strings.Split(msg.Text, " ")
 	if len(splitMsg) != 2 {
 		return tgbotapi.NewMessage(msg.From.ID, addStockResponse)
@@ -37,7 +36,7 @@ func handleAddStockText(s *telegram_bot.Server, msg *tgbotapi.Message, user *mod
 		return tgbotapi.NewMessage(msg.From.ID, "Amount must be a positive number")
 	}
 
-	_, err = s.GrpcClient.AddStock(context.Background(), &pb.StockRequest{
+	_, err = h.grpcClient.AddStock(context.Background(), &pb.StockRequest{
 		Stock: &pb.Stock{
 			Name:   splitMsg[0],
 			Amount: int32(amount),
@@ -54,7 +53,7 @@ func handleAddStockText(s *telegram_bot.Server, msg *tgbotapi.Message, user *mod
 		return tgbotapi.NewMessage(msg.Chat.ID, text)
 	}
 
-	err = s.Repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateMenu)
+	err = h.repo.UpdateUserState(context.Background(), msg.From.ID, models.UserStateMenu)
 	if err != nil {
 		logger.Error.Printf("Failed to update user state with id:%v err: %v\n", msg.From.ID, err)
 

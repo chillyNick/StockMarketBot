@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market"
-	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/repository"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/repository/pgx_repository"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/service"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
@@ -38,7 +38,7 @@ func main() {
 	}
 	defer adp.Close()
 
-	repo := repository.New(adp)
+	repo := pgx_repository.New(adp)
 
 	go stock_market.TrackNotification(repo, os.Getenv("RABBITMQ_URL"))
 
