@@ -1,3 +1,7 @@
+CREATE DATABASE tg_wrapper;
+
+\connect tg_wrapper;
+
 CREATE TYPE user_state AS ENUM ('menu', 'add_stock', 'remove_stock', 'diff', 'add_notification');
 
 CREATE TABLE "user"(

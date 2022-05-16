@@ -41,7 +41,7 @@ func (h *Handler) handleDiffCommand(msg *tgbotapi.Message, user *models.User) tg
 }
 
 func (h *Handler) handleDiffText(msg *tgbotapi.Message, user *models.User) tgbotapi.MessageConfig {
-	if validatePeriod(msg.Text) {
+	if !validatePeriod(msg.Text) {
 		return tgbotapi.NewMessage(msg.Chat.ID, "Incorrect period")
 	}
 

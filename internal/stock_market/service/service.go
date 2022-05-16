@@ -76,6 +76,7 @@ func (s *stockMarketServiceServer) AddStock(ctx context.Context, req *pb.StockRe
 
 			return nil, internalError
 		}
+		return new(empty.Empty), nil
 	}
 
 	if err != nil {

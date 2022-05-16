@@ -39,7 +39,10 @@ func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	conn, err := grpc.Dial(os.Getenv("GRPC_URL"), opts...)
+	conn, err := grpc.Dial(
+		fmt.Sprintf("%s:%s", os.Getenv("GRPC_HOST"), os.Getenv("GRPC_PORT")),
+		opts...,
+	)
 	if err != nil {
 		logger.Error.Fatalf("Grpc connect failed: %s", err)
 	}

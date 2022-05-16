@@ -42,7 +42,7 @@ func main() {
 
 	go stock_market.TrackNotification(repo, os.Getenv("RABBITMQ_URL"))
 
-	lis, err := net.Listen("tcp", os.Getenv("GRPC_URL"))
+	lis, err := net.Listen("tcp", ":"+os.Getenv("GRPC_PORT"))
 	if err != nil {
 		logger.Error.Fatalf("failed to listen: %v", err)
 	}

@@ -1,3 +1,7 @@
+CREATE DATABASE stock_market_tracker;
+
+\connect stock_market_tracker;
+
 CREATE TABLE "user"(
    id serial PRIMARY KEY
 );
