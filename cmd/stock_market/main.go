@@ -5,11 +5,12 @@ import (
 	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/repository"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/service"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"os"
 )
@@ -17,7 +18,7 @@ import (
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file %v", err)
+		logger.Error.Fatalf("Error loading .env file %v", err)
 	}
 }
 
@@ -33,23 +34,26 @@ func main() {
 
 	adp, err := db.New(context.Background(), add)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Fatal(err)
 	}
+	defer adp.Close()
 
 	repo := repository.New(adp)
 
 	go stock_market.TrackNotification(repo, os.Getenv("RABBITMQ_URL"))
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 6000))
+	lis, err := net.Listen("tcp", os.Getenv("GRPC_URL"))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Error.Fatalf("failed to listen: %v", err)
 	}
+	defer lis.Close()
+
 	var opts []grpc.ServerOption
 
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterStockMarketServiceServer(grpcServer, stock_market.New(repo))
+	pb.RegisterStockMarketServiceServer(grpcServer, service.New(repo))
 	err = grpcServer.Serve(lis)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Fatal(err)
 	}
 }

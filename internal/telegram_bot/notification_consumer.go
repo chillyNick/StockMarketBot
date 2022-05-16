@@ -8,7 +8,6 @@ import (
 	"github.com/streadway/amqp"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/queue"
-	"log"
 	"os"
 )
 
@@ -25,10 +24,7 @@ func TrackNotification(s *Server, url string) {
 	}
 	defer amqpChannel.Close()
 
-	q, err := amqpChannel.QueueDeclare("notification", true, false, false, false, nil)
-	if err != nil {
-		logger.Error.Fatalf("could not declare `notification` queue: %s", err)
-	}
+	q := queue.CreateNotificationQueue(amqpChannel)
 
 	err = amqpChannel.Qos(1, 0, false)
 	if err != nil {
@@ -50,18 +46,18 @@ func TrackNotification(s *Server, url string) {
 
 	logger.Info.Printf("Consumer ready, PID: %d", os.Getpid())
 	for d := range messageChannel {
-		log.Printf("Received a message: %s", d.Body)
+		logger.Info.Printf("Received a message: %s", d.Body)
 
 		notification := queue.Notification{}
 		err := json.Unmarshal(d.Body, &notification)
 		if err != nil {
-			log.Printf("Error decoding JSON: %s", err)
+			logger.Error.Printf("Error decoding JSON: %s", err)
 			continue
 		}
 
 		u, err := s.Repo.GetUserByServerUserId(context.Background(), notification.UserId)
 		if err != nil {
-			log.Printf("Error to get user by userServerId: %v %s", notification.UserId, err)
+			logger.Error.Printf("Error to get user by userServerId: %v %s", notification.UserId, err)
 			continue
 		}
 
@@ -79,9 +75,9 @@ func TrackNotification(s *Server, url string) {
 		}
 
 		if err := d.Ack(false); err != nil {
-			log.Printf("Error acknowledging message : %s", err)
+			logger.Error.Printf("Error acknowledging message : %s", err)
 		} else {
-			log.Printf("Acknowledged message")
+			logger.Info.Printf("Acknowledged message")
 		}
 	}
 }

@@ -6,36 +6,32 @@ import (
 	"github.com/piquette/finance-go/quote"
 	"github.com/streadway/amqp"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/models"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/queue"
-	"log"
 	"time"
 )
 
-func handleError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
-}
-
 const sleepTime = time.Hour
 
-func TrackNotification(repo repository, url string) {
+func TrackNotification(repo Repository, url string) {
 	conn, err := amqp.Dial(url)
-	handleError(err, "Can't connect to AMQP")
+	if err != nil {
+		logger.Error.Fatalf("can't connect to AMQP: %s", err)
+	}
 	defer conn.Close()
 
 	amqpChannel, err := conn.Channel()
-	handleError(err, "Can't create a amqpChannel")
-
+	if err != nil {
+		logger.Error.Fatalf("can't create a amqpChannel: %s", err)
+	}
 	defer amqpChannel.Close()
 
-	q, err := amqpChannel.QueueDeclare("notification", true, false, false, false, nil)
-	handleError(err, "Could not declare `notification` queue")
+	q := queue.CreateNotificationQueue(amqpChannel)
 
 	for {
 		ids, err := repo.GetUserIdsWithNotifications(context.Background())
 		if err != nil {
-			log.Println(err)
+			logger.Error.Printf("Failed to get user ids with notifications: %s", err)
 			time.Sleep(sleepTime)
 
 			continue
@@ -44,9 +40,10 @@ func TrackNotification(repo repository, url string) {
 		for _, id := range ids {
 			ntfs, err := repo.GetNotifications(context.Background(), id)
 			if err != nil {
-				println(err)
+				logger.Error.Printf("Failed to get notifications of user %s: %s", id, err)
 				continue
 			}
+
 			ntfByStockName := make(map[string]models.Notification, len(ntfs))
 			stockNames := make([]string, 0, len(ntfs))
 			for _, n := range ntfs {
@@ -56,10 +53,10 @@ func TrackNotification(repo repository, url string) {
 
 			quotes := quote.List(stockNames)
 			for quotes.Next() {
-				quote := quotes.Quote()
-				n := ntfByStockName[quote.Symbol]
-				if (n.Type == models.NotificationTypeUp && quote.Bid < n.Threshold) ||
-					(n.Type == models.NotificationTypeDown && quote.Bid > n.Threshold) {
+				bid := quotes.Quote().Bid
+				n := ntfByStockName[quotes.Quote().Symbol]
+				if (n.Type == models.NotificationTypeUp && bid < n.Threshold) ||
+					(n.Type == models.NotificationTypeDown && bid > n.Threshold) {
 					continue
 				}
 
@@ -67,11 +64,11 @@ func TrackNotification(repo repository, url string) {
 					StockName:  n.StockName,
 					UserId:     n.UserId,
 					Threshold:  n.Threshold,
-					StockPrice: quote.Bid,
+					StockPrice: bid,
 					EventTime:  time.Now(),
 				})
 				if err != nil {
-					log.Println(err)
+					logger.Error.Printf("Error to marshalized: %s", err)
 					continue
 				}
 
@@ -82,18 +79,18 @@ func TrackNotification(repo repository, url string) {
 				})
 
 				if err != nil {
-					log.Printf("Error publishing message: %s", err)
+					logger.Error.Printf("Error publishing message: %s", err)
 					continue
 				}
 
 				err = repo.RemoveNotification(context.Background(), n.Id)
 				if err != nil {
-					log.Println(err)
+					logger.Error.Printf("Failed to remove notification %s: %s", n.Id, err)
 				}
 			}
 
 			if err = quotes.Err(); err != nil {
-				log.Println(err)
+				logger.Error.Printf("Failed to get quotes: %s", err)
 			}
 
 		}

@@ -8,7 +8,6 @@ import (
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"log"
 )
 
 var greetingMessage = "Welcome to the stock market bot."
@@ -35,7 +34,7 @@ func handleStartCommand(s *telegram_bot.Server, msg *tgbotapi.Message) tgbotapi.
 
 	err = s.Repo.CreateUser(context.Background(), msg.From.ID, msg.Chat.ID, id.Id)
 	if err != nil {
-		log.Printf("Failed to create user %v\n", err)
+		logger.Error.Printf("Failed to create user %v\n", err)
 
 		return tgbotapi.NewMessage(msg.Chat.ID, brokenMessage)
 	}

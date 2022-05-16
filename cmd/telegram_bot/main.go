@@ -39,7 +39,7 @@ func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	conn, err := grpc.Dial(os.Getenv("GRRPS_URL"), opts...)
+	conn, err := grpc.Dial(os.Getenv("GRPC_URL"), opts...)
 	if err != nil {
 		logger.Error.Fatalf("Grpc connect failed: %s", err)
 	}

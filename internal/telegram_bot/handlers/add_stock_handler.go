@@ -38,8 +38,10 @@ func handleAddStockText(s *telegram_bot.Server, msg *tgbotapi.Message, user *mod
 	}
 
 	_, err = s.GrpcClient.AddStock(context.Background(), &pb.StockRequest{
-		Name:   splitMsg[0],
-		Amount: int32(amount),
+		Stock: &pb.Stock{
+			Name:   splitMsg[0],
+			Amount: int32(amount),
+		},
 		UserId: &pb.UserId{Id: user.ServerUserId},
 	})
 

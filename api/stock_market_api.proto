@@ -10,8 +10,7 @@ message UserId {
 }
 
 message StockRequest {
-  string name   = 1;
-  int32  amount  = 2;
+  Stock  stock  = 1;
   UserId userId = 3;
 }
 
@@ -22,7 +21,7 @@ message Stock {
 
 message StockChanges {
   Stock  stock        = 1;
-  double oldPrice  = 2;
+  double oldPrice     = 2;
   double currentPrice = 3;
 }
 
@@ -47,7 +46,7 @@ message GetPortfolioChangesResponse {
 }
 
 message AddNotificationRequest {
-  UserId userId = 1;
+  UserId userId    = 1;
   string stockName = 2;
   double threshold = 3;
 }
