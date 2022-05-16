@@ -222,7 +222,7 @@ func (s *stockMarketServiceServer) AddNotification(ctx context.Context, req *pb.
 		nType = models.NotificationTypeUp
 	}
 
-	err = s.repo.AddNotification(ctx, req.GetUserId().GetId(), req.GetStockName(), req.GetThreshold(), nType)
+	err = s.repo.AddNotification(ctx, req.GetUserId().GetId(), q.Symbol, req.GetThreshold(), nType)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Smth wrong with server")
 	}

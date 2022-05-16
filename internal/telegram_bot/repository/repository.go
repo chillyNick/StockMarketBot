@@ -66,6 +66,33 @@ func (r *repository) GetUser(ctx context.Context, id int64) (*models.User, error
 	return &u, nil
 }
 
+func (r *repository) GetUserByServerUserId(ctx context.Context, serverUserId int32) (*models.User, error) {
+	const query = `
+		SELECT
+			id,
+			chat_id,
+			server_user_id,
+			state
+		FROM "user"
+		WHERE server_user_id = $1
+	`
+
+	u := models.User{}
+
+	err := r.pool.QueryRow(ctx, query, serverUserId).Scan(
+		&u.Id,
+		&u.ChatId,
+		&u.ServerUserId,
+		&u.State,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, db.ErrNotFound
+	}
+
+	return &u, nil
+}
+
 func (r *repository) UpdateUserState(ctx context.Context, id int64, state string) error {
 	const query = `
 		UPDATE "user"

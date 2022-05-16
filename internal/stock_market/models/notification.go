@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 const (
 	NotificationTypeUp   = "up"
 	NotificationTypeDown = "down"
@@ -12,5 +10,5 @@ type Notification struct {
 	StockName string
 	UserId    int32
 	Threshold float64
-	Type      time.Time
+	Type      string
 }

@@ -36,6 +36,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	repo := repository.New(adp)
+
+	go stock_market.TrackNotification(repo, os.Getenv("RABBITMQ_URL"))
+
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 6000))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -43,7 +47,7 @@ func main() {
 	var opts []grpc.ServerOption
 
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterStockMarketServiceServer(grpcServer, stock_market.New(repository.New(adp)))
+	pb.RegisterStockMarketServiceServer(grpcServer, stock_market.New(repo))
 	err = grpcServer.Serve(lis)
 	if err != nil {
 		log.Fatal(err)

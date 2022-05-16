@@ -38,6 +38,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	go telegram_bot.TrackNotification(bot, os.Getenv("RABBITMQ_URL"))
+
 	err = bot.Serve()
 	if err != nil {
 		log.Fatal(err)
