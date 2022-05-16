@@ -2,53 +2,52 @@ package telegram_bot
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/handlers"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-type server struct {
+type Server struct {
 	bot        *tgbotapi.BotAPI
-	repo       repository
-	grpcClient pb.StockMarketServiceClient
+	Repo       Repository
+	GrpcClient pb.StockMarketServiceClient
 }
 
-func New(tgToken string, repo repository, debug bool) (*server, error) {
+func New(tgToken string, repo Repository, conn grpc.ClientConnInterface, debug bool) (*Server, error) {
 	bot, err := tgbotapi.NewBotAPI(tgToken)
-	if err != nil {
-		return nil, err
-	}
-
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-
-	conn, err := grpc.Dial("localhost:6000", opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	bot.Debug = debug
 
-	return &server{
+	return &Server{
 		bot:        bot,
-		repo:       repo,
-		grpcClient: pb.NewStockMarketServiceClient(conn),
+		Repo:       repo,
+		GrpcClient: pb.NewStockMarketServiceClient(conn),
 	}, nil
 }
 
-func (s *server) Serve() error {
+func (s *Server) Serve() {
+	logger.Info.Println("Start to handle tg messages")
 	updateConfig := tgbotapi.NewUpdate(0)
 	updates := s.bot.GetUpdatesChan(updateConfig)
 
 	for update := range updates {
-		s.handle(update)
+		msgConf := handlers.HandleUpdate(s, update)
+		if msgConf != nil {
+			s.send(msgConf)
+		}
 	}
-
-	return nil
 }
 
-func (s *server) send(c tgbotapi.Chattable) {
-	if _, err := s.bot.Send(c); err != nil {
-		panic(err)
+func (s *Server) send(c tgbotapi.Chattable) (ok bool) {
+	_, err := s.bot.Send(c)
+	if err != nil {
+		logger.Error.Printf("Failed to send msg to telegram: ", err)
+		return false
 	}
+
+	return true
 }

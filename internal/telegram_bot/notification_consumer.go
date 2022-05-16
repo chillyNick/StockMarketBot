@@ -6,35 +6,34 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/streadway/amqp"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/queue"
 	"log"
 	"os"
-	"time"
 )
 
-func handleError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
-}
-
-const sleepTime = time.Hour
-
-func TrackNotification(s *server, url string) {
+func TrackNotification(s *Server, url string) {
 	conn, err := amqp.Dial(url)
-	handleError(err, "Can't connect to AMQP")
+	if err != nil {
+		logger.Error.Fatalf("can't connect to AMQP: %s", err)
+	}
 	defer conn.Close()
 
 	amqpChannel, err := conn.Channel()
-	handleError(err, "Can't create a amqpChannel")
-
+	if err != nil {
+		logger.Error.Fatalf("can't create a amqpChannel: %s", err)
+	}
 	defer amqpChannel.Close()
 
 	q, err := amqpChannel.QueueDeclare("notification", true, false, false, false, nil)
-	handleError(err, "Could not declare `notification` queue")
+	if err != nil {
+		logger.Error.Fatalf("could not declare `notification` queue: %s", err)
+	}
 
 	err = amqpChannel.Qos(1, 0, false)
-	handleError(err, "Could not configure QoS")
+	if err != nil {
+		logger.Error.Fatalf("could not configure QoS: %s", err)
+	}
 
 	messageChannel, err := amqpChannel.Consume(
 		q.Name,
@@ -45,9 +44,11 @@ func TrackNotification(s *server, url string) {
 		false,
 		nil,
 	)
-	handleError(err, "Could not register consumer")
+	if err != nil {
+		logger.Error.Fatalf("could not register consumer: %s", err)
+	}
 
-	log.Printf("Consumer ready, PID: %d", os.Getpid())
+	logger.Info.Printf("Consumer ready, PID: %d", os.Getpid())
 	for d := range messageChannel {
 		log.Printf("Received a message: %s", d.Body)
 
@@ -58,7 +59,7 @@ func TrackNotification(s *server, url string) {
 			continue
 		}
 
-		u, err := s.repo.GetUserByServerUserId(context.Background(), notification.UserId)
+		u, err := s.Repo.GetUserByServerUserId(context.Background(), notification.UserId)
 		if err != nil {
 			log.Printf("Error to get user by userServerId: %v %s", notification.UserId, err)
 			continue
@@ -73,9 +74,7 @@ func TrackNotification(s *server, url string) {
 		)
 
 		msgConfig := tgbotapi.NewMessage(u.ChatId, text)
-		_, err = s.bot.Send(msgConfig)
-		if err != nil {
-			log.Printf("Failed to send tg message: %s", err)
+		if !s.send(msgConfig) {
 			continue
 		}
 

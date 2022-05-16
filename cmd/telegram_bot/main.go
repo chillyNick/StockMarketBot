@@ -7,14 +7,16 @@ import (
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/repository"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
-	"log"
+	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"os"
 )
 
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file %v", err)
+		logger.Error.Fatalf("Error loading .env file %s", err)
 	}
 }
 
@@ -30,18 +32,25 @@ func main() {
 
 	adp, err := db.New(context.Background(), add)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Fatalf("Db connect failed: %s", err)
 	}
+	defer adp.Close()
 
-	bot, err := telegram_bot.New(os.Getenv("TELEGRAM_APITOKEN"), repository.New(adp), false)
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	conn, err := grpc.Dial(os.Getenv("GRRPS_URL"), opts...)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Fatalf("Grpc connect failed: %s", err)
+	}
+	defer conn.Close()
+
+	bot, err := telegram_bot.New(os.Getenv("TELEGRAM_APITOKEN"), repository.New(adp), conn, false)
+	if err != nil {
+		logger.Error.Fatal(err)
 	}
 
 	go telegram_bot.TrackNotification(bot, os.Getenv("RABBITMQ_URL"))
 
-	err = bot.Serve()
-	if err != nil {
-		log.Fatal(err)
-	}
+	bot.Serve()
 }
