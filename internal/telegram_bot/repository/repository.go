@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"context"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
+	"golang.org/x/net/context"
 )
 
 type Repository interface {

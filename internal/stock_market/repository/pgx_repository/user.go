@@ -1,6 +1,6 @@
 package pgx_repository
 
-import "context"
+import "golang.org/x/net/context"
 
 func (r *repository) CreateUser(ctx context.Context) (id int32, err error) {
 	const query = `

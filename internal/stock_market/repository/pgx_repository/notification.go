@@ -1,8 +1,8 @@
 package pgx_repository
 
 import (
-	"context"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/models"
+	"golang.org/x/net/context"
 )
 
 func (r *repository) AddNotification(ctx context.Context, userId int32, stockName string, threshold float64, nType string) error {

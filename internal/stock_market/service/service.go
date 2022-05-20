@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -14,6 +13,7 @@ import (
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"time"

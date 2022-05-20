@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
+	"golang.org/x/net/context"
 	"strings"
 )
 

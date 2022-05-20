@@ -1,11 +1,11 @@
 package pgx_repository
 
 import (
-	"context"
 	"errors"
 	"github.com/jackc/pgx/v4"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/models"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
+	"golang.org/x/net/context"
 )
 
 func (r *repository) GetStock(ctx context.Context, userId int32, name string) (*models.Stock, error) {

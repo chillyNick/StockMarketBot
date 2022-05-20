@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
+	"golang.org/x/net/context"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
