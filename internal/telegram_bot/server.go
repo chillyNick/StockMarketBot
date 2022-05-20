@@ -2,10 +2,10 @@ package telegram_bot
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/logger"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/handlers"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/repository"
 	pb "gitlab.ozon.dev/chillyNick/homework-2/pkg/api"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"google.golang.org/grpc"
 )
 

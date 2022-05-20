@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/joho/godotenv"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/db"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/logger"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/repository/pgx_repository"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

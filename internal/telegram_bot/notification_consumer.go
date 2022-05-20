@@ -5,8 +5,8 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/streadway/amqp"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/queue"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/logger"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/queue"
 	"golang.org/x/net/context"
 	"os"
 )

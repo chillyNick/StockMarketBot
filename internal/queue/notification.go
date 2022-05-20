@@ -2,7 +2,7 @@ package queue
 
 import (
 	"github.com/streadway/amqp"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/logger"
 	"time"
 )
 

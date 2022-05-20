@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"github.com/piquette/finance-go/quote"
 	"github.com/streadway/amqp"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/logger"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/queue"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/models"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/stock_market/repository"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/queue"
 	"golang.org/x/net/context"
 	"time"
 )

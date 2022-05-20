@@ -4,8 +4,8 @@ import (
 	"errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/db"
 	"gitlab.ozon.dev/chillyNick/homework-2/internal/telegram_bot/models"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
 	"golang.org/x/net/context"
 )
 

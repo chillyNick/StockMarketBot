@@ -3,8 +3,8 @@ package handlers
 import (
 	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/db"
-	"gitlab.ozon.dev/chillyNick/homework-2/pkg/logger"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/db"
+	"gitlab.ozon.dev/chillyNick/homework-2/internal/logger"
 	"golang.org/x/net/context"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
