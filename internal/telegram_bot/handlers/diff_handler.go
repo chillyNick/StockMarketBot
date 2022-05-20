@@ -83,5 +83,5 @@ func validatePeriod(period string) (valid bool) {
 		}
 	}
 
-	return true
+	return false
 }
