@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+package api;
+
+option go_package="gitlab.ozon.dev/chillyNick/homework-2/pkg/api";
+
+message UserId {
+  int32 id = 1;
+}
+
+message StockRequest {
+  Stock  stock  = 1;
+  UserId userId = 3;
+}
+
+message Stock {
+  string name   = 1;
+  int32  amount = 2;
+}
+
+message StockChanges {
+  Stock  stock        = 1;
+  double oldPrice     = 2;
+  double currentPrice = 3;
+}
+
+message GetStocksResponse {
+  repeated Stock stocks = 1;
+}
+
+enum Period {
+  HOUR = 0;
+  DAY  = 1;
+  WEEK = 2;
+  ALL  = 3;
+}
+
+message GetPortfolioChangesRequest {
+  UserId userId = 1;
+  Period period = 2;
+}
+
+message GetPortfolioChangesResponse {
+  repeated StockChanges stocks = 1;
+}
+
+message AddNotificationRequest {
+  UserId userId    = 1;
+  string stockName = 2;
+  double threshold = 3;
+}
+
+service StockMarketService {
+  rpc CreateUser(google.protobuf.Empty) returns (UserId) {}
+  rpc GetStocks(UserId) returns (GetStocksResponse) {}
+  rpc AddStock(StockRequest) returns (google.protobuf.Empty) {}
+  rpc RemoveStock(StockRequest) returns (google.protobuf.Empty) {}
+  rpc GetPortfolioChanges(GetPortfolioChangesRequest) returns (GetPortfolioChangesResponse) {}
+  rpc AddNotification(AddNotificationRequest) returns (google.protobuf.Empty) {}
+}

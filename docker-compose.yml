@@ -1,0 +1,47 @@
+version: '3'
+services:
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile-telegram-bot
+    restart: on-failure
+    depends_on:
+      - postgres
+      - rabbitmq
+      - stock-market
+
+  stock-market:
+    build:
+      context: .
+      dockerfile: Dockerfile-stock-market
+    restart: on-failure
+    ports:
+      - '${GRPC_PORT}:${GRPC_PORT}'
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  postgres:
+    image: postgres:latest
+    container_name: full_db_postgres
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+    ports:
+      - '${PG_PORT}:5432'
+    volumes:
+      - database_postgres:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+
+  rabbitmq:
+    image: 'bitnami/rabbitmq:latest'
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+
+volumes:
+  database_postgres:
+
+networks:
+  default:
+    driver: bridge
